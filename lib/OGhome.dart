@@ -266,7 +266,7 @@ class _RealhomeState extends State<Realhome> {
                                     onTap: () => Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => IndivItem(
+                                        builder: (context) => IndivItem( 
                                             title: data['title'],
                                           description:data['description'],
                                           amount:data['amount'].toString(),
