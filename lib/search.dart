@@ -10,15 +10,26 @@ class Search extends StatefulWidget {
 class _SearchState extends State<Search> {
   final bid = TextEditingController();
   int _selectedCategoryIndex = 0;
-  final List<String> categories = ['Vehicles', 'Antique', 'others'];
+  int _selectedCollectionIndex = 0; // 0 for items, 1 for services
   TextEditingController _searchController = TextEditingController();
+  
   String _searchQuery = '';
 
-  // Method to fetch items from Firestore
-  Future<List<Map<String, dynamic>>> getItems() async {
+  // Categories for items and services
+  final Map<int, List<String>> _categories = {
+    0: ['Vehicles', 'Antique', 'others'],
+    1: ['Available Services'],
+  };
+
+  // Collection names
+  final List<String> collections = ['Items', 'Services'];
+
+  // Method to fetch items or services from Firestore based on selected collection
+  Future<List<Map<String, dynamic>>> getEntries() async {
     try {
+      String collection = _selectedCollectionIndex == 0 ? 'items' : 'services';
       QuerySnapshot<Map<String, dynamic>> querySnapshot =
-          await FirebaseFirestore.instance.collection('items').get();
+          await FirebaseFirestore.instance.collection(collection).get();
       return querySnapshot.docs.map((doc) => doc.data()).toList();
     } catch (e) {
       print('Error fetching data: $e');
@@ -62,9 +73,18 @@ class _SearchState extends State<Search> {
         children: [
           SizedBox(height: 10),
           Row(
-            children: List<Widget>.generate(categories.length, (index) {
+            children: List<Widget>.generate(collections.length, (index) {
+              return _CollectionButton(
+                label: collections[index],
+                isActive: _selectedCollectionIndex == index,
+                onTap: () => _selectCollection(index),
+              );
+            }),
+          ),
+          Row(
+            children: List<Widget>.generate(_categories[_selectedCollectionIndex]!.length, (index) {
               return _CategoryButton(
-                label: categories[index],
+                label: _categories[_selectedCollectionIndex]![index],
                 isActive: _selectedCategoryIndex == index,
                 onTap: () => _selectCategory(index),
               );
@@ -93,7 +113,7 @@ class _SearchState extends State<Search> {
           ),
           Expanded(
             child: FutureBuilder<List<Map<String, dynamic>>>(
-              future: getItems(),
+              future: getEntries(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
@@ -102,8 +122,8 @@ class _SearchState extends State<Search> {
                 } else if (snapshot.hasData) {
                   var filteredItems = snapshot.data!
                       .where((item) =>
-                          item['category'] ==
-                              categories[_selectedCategoryIndex] &&
+                          // item['category'] ==
+                          //     _categories[_selectedCollectionIndex]![_selectedCategoryIndex] &&
                           item['title']
                               .toLowerCase()
                               .contains(_searchQuery.toLowerCase()))
@@ -175,6 +195,7 @@ class _SearchState extends State<Search> {
                                             details: item['summary'],
                                             image: item['images'],
                                             amount: item['amount'].toString(),
+                                            type: '',
                                           );
                                         },
                                       ));
@@ -218,6 +239,14 @@ class _SearchState extends State<Search> {
       _selectedCategoryIndex = index;
     });
   }
+
+  void _selectCollection(int index) {
+    setState(() {
+      _selectedCollectionIndex = index;
+      // Reset category index when changing collection
+      _selectedCategoryIndex = 0;
+    });
+  }
 }
 
 class _CategoryButton extends StatelessWidget {
@@ -226,6 +255,53 @@ class _CategoryButton extends StatelessWidget {
   final VoidCallback onTap;
 
   const _CategoryButton({
+    Key? key,
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          height: 48,
+          alignment: Alignment.center,
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: isActive ? Color.fromARGB(255, 239, 227, 189) : Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 4,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: isActive ? Colors.black : Colors.grey,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CollectionButton extends StatelessWidget {
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  const _CollectionButton({
     Key? key,
     required this.label,
     required this.isActive,

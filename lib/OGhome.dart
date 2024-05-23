@@ -144,6 +144,7 @@ class _RealhomeState extends State<Realhome> {
                                           details:data['summary'],
                                           image:data['images'],
                                           amount:data['amount'].toString(),
+                                          type:'item'
 
                                         ),
                                       ),
@@ -271,7 +272,8 @@ class _RealhomeState extends State<Realhome> {
                                           amount:data['amount'].toString(),
                                           duration:data['duration'],
                                           details:data['summary'],
-                                          image:data['images']
+                                          image:data['images'],
+                                          type:'service'
                                         ),
                                       ),
                                     ),
@@ -305,7 +307,7 @@ class _RealhomeState extends State<Realhome> {
                                     ),
                                     GestureDetector(
                                       onTap: () {
-                                        _showInputDialog(data['title'],data['duration'],data['images'],data['amount']); // Pass the cart object to the dialog
+                                        _showInputDialog1(data['title'],data['duration'],data['images'],data['amount']); // Pass the cart object to the dialog
                                       },
                                       child: Container(
                                         padding: const EdgeInsets.all(20),
@@ -381,6 +383,54 @@ class _RealhomeState extends State<Realhome> {
                   }
                  else{
                   Fluttertoast.showToast(msg: 'Please check the starting amount!'); 
+                 }
+                  Navigator.pop(context);
+                } else {
+                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Please enter number')));
+                }
+              },
+              child: const Text('Bid'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (userInput != null) {
+      // Handle the user input here, such as updating state or performing arithmetic operations
+      print('User entered: $userInput');
+    }
+  }
+
+Future<void> _showInputDialog1(title,duration, image, amount) async {
+    int? userInput = await showDialog<int>(
+      context: context,
+      builder: (BuildContext context) {
+        TextEditingController controller = TextEditingController();
+
+        return AlertDialog(
+          title: const Text('Enter Value'),
+          content: TextField(
+            controller: bid,
+            decoration: const InputDecoration(hintText: 'Enter your bid'),
+            keyboardType: TextInputType.number,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                int? value = int.tryParse(bid.text);
+                if (value != null) {
+                  if(value<amount){
+                     postData(title,duration,image);
+                  }
+                 else{
+                  Fluttertoast.showToast(msg: 'Please check the maximum amount!'); 
                  }
                   Navigator.pop(context);
                 } else {

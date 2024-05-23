@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:myproject/home.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,6 +12,7 @@ class IndivItem extends StatefulWidget {
   final String duration;
   final String details;
   final String amount;
+  final String type;
 
   IndivItem({
     required this.title,
@@ -19,6 +21,7 @@ class IndivItem extends StatefulWidget {
     required this.duration,
     required this.details,
     required this.amount,
+    required this.type,
   });
 
   @override
@@ -30,9 +33,8 @@ class _IndivItemState extends State<IndivItem> {
   final bid = TextEditingController();
   var report = TextEditingController();
 
-  Future<double?> bidValue() async {
-    print('Fetching highest bid...');
-
+Future<double?> bidValue() async {
+    print('Fetching bid value...');
 
     // Fetching the documents from Firestore
     final querySnapshot = await FirebaseFirestore.instance
@@ -40,27 +42,27 @@ class _IndivItemState extends State<IndivItem> {
         .where('name', isEqualTo: widget.title)
         .get();
 
-    // Extracting bid values and finding the maximum bid
+    // Extracting bid values
     final bids = querySnapshot.docs
-        .map((doc) {
-          var bid = doc.data()['bid'];
-          if (bid is String) {
-            return double.tryParse(bid) ?? 0.0;
-          } else if (bid is num) {
-            return bid.toDouble();
-          } else {
-            return 0.0;
-          }
-        })
+        .map((doc) => doc.data()['bid'] is double
+            ? doc.data()['bid'] as double
+            : double.tryParse(doc.data()['bid'].toString()) ?? 0.0)
         .toList();
 
     if (bids.isEmpty) {
       return null; // Handle the case where no bids are found
     }
 
-    final maxBid = bids.reduce((a, b) => a > b ? a : b);
-    print(maxBid);
-    return maxBid;
+    // Sorting the bid values
+    bids.sort();
+
+    if (widget.type == 'service') {
+      // Show the lowest bid for services
+      return bids.first;
+    } else {
+      // Show the highest bid for other types
+      return bids.last;
+    }
   }
 
   Future<void> postData() async {
@@ -182,7 +184,9 @@ class _IndivItemState extends State<IndivItem> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Highest bid',
+                            widget.type == 'service'
+                                ? 'Lowest bid'
+                                : 'Highest bid',
                             style: TextStyle(fontSize: 16),
                           ),
                           Text(
@@ -199,7 +203,9 @@ class _IndivItemState extends State<IndivItem> {
                 ),
                 SizedBox(height: 20),
                 GestureDetector(
-                  onTap: isBidClosed ? null : () => _showInputDialog(context),
+                  onTap: isBidClosed
+                      ? null
+                      : () => _showInputDialog1(widget.amount),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
@@ -260,12 +266,92 @@ class _IndivItemState extends State<IndivItem> {
                   setState(() {
                     _futureMaxBid = bidValue();
                   });
-                  Navigator.push(context, MaterialPageRoute(builder: (context) {
-                    return HomeP(currentIndex: 0);
-                  },));
+                  Navigator.push(context, MaterialPageRoute(
+                    builder: (context) {
+                      return HomeP(currentIndex: 0);
+                    },
+                  ));
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Please enter a number')),
+                  );
+                }
+              },
+              child: const Text('Bid'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+  
+
+  Future<void> _showInputDialog1(amount) async {
+    await showDialog<int>(
+      context: context,
+      builder: (BuildContext context) {
+        TextEditingController controller = TextEditingController();
+
+        return AlertDialog(
+          title: const Text('Enter Value'),
+          content: TextField(
+            controller: bid,
+            decoration:
+                const InputDecoration(hintText: 'Enter your bid amount'),
+            keyboardType: TextInputType.number,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Cancel'),
+            ),
+
+            widget.type=='service'?
+            TextButton(
+              onPressed: () {
+                // Parse the bid value from the text input
+                int? value = int.tryParse(bid.text.replaceAll(',', '').trim());
+
+                // Check if the value is valid
+                if (value != null) {
+                  // Parse the starting amount and compare the bid value
+                  var amt = double.tryParse(amount.replaceAll(',', '').trim());
+                  if (amt != null && value < amt) {
+                    postData();
+                    Navigator.pop(context);
+                  } else {
+                    Fluttertoast.showToast(
+                        msg: 'Please check the maximum amount!');
+                  }
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Please enter a valid number')),
+                  );
+                }
+              },
+              child: const Text('Bid'),
+            ):
+            TextButton(
+              onPressed: () {
+                // Parse the bid value from the text input
+                int? value = int.tryParse(bid.text.replaceAll(',', '').trim());
+
+                // Check if the value is valid
+                if (value != null) {
+                  // Parse the starting amount and compare the bid value
+                  var amt = double.tryParse(amount.replaceAll(',', '').trim());
+                  if (amt != null && value > amt) {
+                    postData();
+                    Navigator.pop(context);
+                  } else {
+                    Fluttertoast.showToast(
+                        msg: 'Please check the maximum amount!');
+                  }
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Please enter a valid number')),
                   );
                 }
               },
@@ -295,13 +381,11 @@ class _IndivItemState extends State<IndivItem> {
               SizedBox(height: 10),
               ElevatedButton(
                 onPressed: () async {
-                  SharedPreferences spref = await SharedPreferences.getInstance();
+                  SharedPreferences spref =
+                      await SharedPreferences.getInstance();
                   var user = spref.getString('username');
-                  FirebaseFirestore.instance.collection('report').add({
-                    'user':user,
-                    'report':report.text,
-                    'item':title
-                  });
+                  FirebaseFirestore.instance.collection('report').add(
+                      {'user': user, 'report': report.text, 'item': title});
                   // Handle report submission
                   print('Report submitted...');
                   Navigator.pop(context);
