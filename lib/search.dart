@@ -10,7 +10,7 @@ class Search extends StatefulWidget {
 class _SearchState extends State<Search> {
   final bid = TextEditingController();
   int _selectedCategoryIndex = 0;
-  final List<String> categories = ['Vehicles', 'Antique', 'Others'];
+  final List<String> categories = ['Vehicles', 'Antique', 'others'];
   TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
