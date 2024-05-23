@@ -8,23 +8,18 @@ class Search extends StatefulWidget {
 }
 
 class _SearchState extends State<Search> {
-  final bid = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
   int _selectedCategoryIndex = 0;
-  int _selectedCollectionIndex = 0; // 0 for items, 1 for services
-  TextEditingController _searchController = TextEditingController();
-  
+  int _selectedCollectionIndex = 0;
   String _searchQuery = '';
 
-  // Categories for items and services
   final Map<int, List<String>> _categories = {
     0: ['Vehicles', 'Antique', 'others'],
     1: ['Available Services'],
   };
 
-  // Collection names
   final List<String> collections = ['Items', 'Services'];
 
-  // Method to fetch items or services from Firestore based on selected collection
   Future<List<Map<String, dynamic>>> getEntries() async {
     try {
       String collection = _selectedCollectionIndex == 0 ? 'items' : 'services';
@@ -37,7 +32,6 @@ class _SearchState extends State<Search> {
     }
   }
 
-  // Method to fetch the highest bid for a specific item
   Future<double?> bidValue(String itemName) async {
     print('Fetching highest bid for $itemName...');
 
@@ -73,22 +67,24 @@ class _SearchState extends State<Search> {
         children: [
           SizedBox(height: 10),
           Row(
-            children: List<Widget>.generate(collections.length, (index) {
+            children: collections.map((collection) {
+              int index = collections.indexOf(collection);
               return _CollectionButton(
-                label: collections[index],
+                label: collection,
                 isActive: _selectedCollectionIndex == index,
                 onTap: () => _selectCollection(index),
               );
-            }),
+            }).toList(),
           ),
           Row(
-            children: List<Widget>.generate(_categories[_selectedCollectionIndex]!.length, (index) {
+            children: _categories[_selectedCollectionIndex]!.map((category) {
+              int index = _categories[_selectedCollectionIndex]!.indexOf(category);
               return _CategoryButton(
-                label: _categories[_selectedCollectionIndex]![index],
+                label: category,
                 isActive: _selectedCategoryIndex == index,
                 onTap: () => _selectCategory(index),
               );
-            }),
+            }).toList(),
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
@@ -122,12 +118,14 @@ class _SearchState extends State<Search> {
                 } else if (snapshot.hasData) {
                   var filteredItems = snapshot.data!
                       .where((item) =>
-                          // item['category'] ==
-                          //     _categories[_selectedCollectionIndex]![_selectedCategoryIndex] &&
+                          item['category'] == _categories[_selectedCollectionIndex]![_selectedCategoryIndex] &&
                           item['title']
                               .toLowerCase()
                               .contains(_searchQuery.toLowerCase()))
                       .toList();
+                  if (filteredItems.isEmpty) {
+                    return Center(child: Text("No items found."));
+                  }
                   return ListView.builder(
                     itemCount: filteredItems.length,
                     itemBuilder: (context, index) {
@@ -243,8 +241,7 @@ class _SearchState extends State<Search> {
   void _selectCollection(int index) {
     setState(() {
       _selectedCollectionIndex = index;
-      // Reset category index when changing collection
-      _selectedCategoryIndex = 0;
+      _selectedCategoryIndex = 0; // Reset category index when changing collection
     });
   }
 }

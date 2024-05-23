@@ -53,6 +53,7 @@ Future<String?> _uploadImages() async {
       'images': imageUrl,
       'duration': duration,
       'amount': amount,
+      'category':'Available Services',
       'timestamp': FieldValue.serverTimestamp(),
     });
 
