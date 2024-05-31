@@ -119,6 +119,16 @@ class _MineAucState extends State<MineAuc> {
                                 ],
                               ),
                             ),
+                             Padding(
+                              padding: const EdgeInsets.all(6.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text('Owner Contact :'),
+                                  Text('${item['details']['mobile']}',)
+                                ],
+                              ),
+                            ),
                           ],
                         ),
                       ),

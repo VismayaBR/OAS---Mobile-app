@@ -194,6 +194,7 @@ class _SearchState extends State<Search> {
                                             image: item['images'],
                                             amount: item['amount'].toString(),
                                             type: '',
+                                            number: '',
                                           );
                                         },
                                       ));

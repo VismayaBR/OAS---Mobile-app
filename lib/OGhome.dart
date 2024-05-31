@@ -41,7 +41,7 @@ class _RealhomeState extends State<Realhome> {
   Future<List<Map<String, dynamic>>> getItems() async {
     try {
       QuerySnapshot<Map<String, dynamic>> querySnapshot =
-          await FirebaseFirestore.instance.collection('items').get();
+          await FirebaseFirestore.instance.collection('items').where('status',isEqualTo: "0").get();
       return querySnapshot.docs.map((doc) => doc.data()).toList();
     } catch (e) {
       print('Error fetching data: $e');
@@ -144,7 +144,8 @@ class _RealhomeState extends State<Realhome> {
                                           details:data['summary'],
                                           image:data['images'],
                                           amount:data['amount'].toString(),
-                                          type:'item'
+                                          type:'item',
+                                          number:data['mobile']
 
                                         ),
                                       ),
@@ -273,7 +274,8 @@ class _RealhomeState extends State<Realhome> {
                                           duration:data['duration'],
                                           details:data['summary'],
                                           image:data['images'],
-                                          type:'service'
+                                          type:'service',
+                                          number:data['mobile']
                                         ),
                                       ),
                                     ),

@@ -13,6 +13,7 @@ class IndivItem extends StatefulWidget {
   final String details;
   final String amount;
   final String type;
+  final String number;
 
   IndivItem({
     required this.title,
@@ -21,7 +22,8 @@ class IndivItem extends StatefulWidget {
     required this.duration,
     required this.details,
     required this.amount,
-    required this.type,
+    required this.type, 
+    required this.number,
   });
 
   @override
@@ -69,6 +71,8 @@ Future<double?> bidValue() async {
     SharedPreferences spref = await SharedPreferences.getInstance();
     var id = spref.getString('user_id');
     var name = spref.getString('username');
+      
+      // var number = spref.getString('phone');
     DateTime now = DateTime.now();
     DateFormat formatter = DateFormat('dd-MM-yyyy');
     String formattedDate = formatter.format(now);
@@ -80,7 +84,8 @@ Future<double?> bidValue() async {
       'date': formattedDate,
       'name': widget.title,
       'duration': widget.duration,
-      'image': widget.image
+      'image': widget.image,
+      'mobile':widget.number
     });
   }
 
