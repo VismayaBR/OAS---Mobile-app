@@ -51,7 +51,7 @@ class _RealhomeState extends State<Realhome> {
    Future<List<Map<String, dynamic>>> getServices() async {
     try {
       QuerySnapshot<Map<String, dynamic>> querySnapshot =
-          await FirebaseFirestore.instance.collection('services').get();
+          await FirebaseFirestore.instance.collection('services').where('status',isEqualTo: "0").get();
       return querySnapshot.docs.map((doc) => doc.data()).toList();
     } catch (e) {
       print('Error fetching data: $e');

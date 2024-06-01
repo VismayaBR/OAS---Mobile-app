@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:myproject/components/my_textfield.dart';
 import 'package:myproject/home.dart';
 import 'package:path/path.dart' as Path;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NewService extends StatefulWidget {
   const NewService({Key? key}) : super(key: key);
@@ -44,6 +45,10 @@ Future<String?> _uploadImages() async {
       String duration,
       double amount) async {
     var imageUrl = await _uploadImages();
+     SharedPreferences spref =await SharedPreferences.getInstance();
+     var owner = spref.getString('username');
+     
+      var number = spref.getString('phone');
     CollectionReference items = FirebaseFirestore.instance.collection('services');
 
     await items.add({
@@ -55,6 +60,9 @@ Future<String?> _uploadImages() async {
       'amount': amount,
       'category':'Available Services',
       'timestamp': FieldValue.serverTimestamp(),
+      'status':"0",
+      'owner': owner,
+      'mobile':number,
     });
 
     Fluttertoast.showToast(
